@@ -1,0 +1,18 @@
+[project]
+name = "fontra"
+version = "0.1.0"
+description = "Some small work with fonts."
+authors = [
+    {name = "HivertMoZara", email = "worldmozara@163.com"},
+]
+license = {text = "MIT"}
+dependencies = ["freetype-py>=0.3.2,<1", "typing_extensions>=4.6.0,<5"]
+requires-python = ">=3.9"
+readme = "README.md"
+
+[project.urls]
+Homepage = "https://github.com/NCBM/fontra"
+Repository = "https://github.com/NCBM/fontra"
+
+[tool.pyright]
+pythonVersion = "3.9"
