@@ -112,6 +112,13 @@ def update_fontrefs_index():
             _update_fontref_index(fn, face)
 
 
+def get_font(name: str, style: str, lookup_langindex: bool = True) -> FontRef:
+    """Get info for loading correct font faces."""
+    if lookup_langindex:
+        return _indexed_fontrefs[_indexed_langnames[name]][style]
+    return _indexed_fontrefs[name][style]
+
+
 update_system_fontdirs()
 update_fontfiles_index()
 update_fontrefs_index()
