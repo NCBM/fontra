@@ -139,7 +139,12 @@ def update_fontrefs_index():
 
 
 def all_fonts() -> list[FontFamilyName]:
-    """Get available fonts, without localized name."""
+    """Get available fonts, without localized name.
+
+    Return: a list includes font family names.
+    
+    The name list is not guaranteed to be sorted.
+    """
     return list(_indexed_fontrefs)
 
 
@@ -151,14 +156,29 @@ def unlocalized_name(name: FontFamilyName) -> FontFamilyName:
 
 
 def get_font(name: str, style: str, localized: bool = True) -> FontRef:
-    """Get info for loading correct font faces."""
+    """Get info for loading correct font faces.
+    
+    Params:
+    - name: font family name.
+    - style: font style.
+    - localized: whether to lookup localized index.
+
+    Return: a named tuple includes file path and collection index.
+    """
     if localized:
         return _indexed_fontrefs[unlocalized_name(name)][style]
     return _indexed_fontrefs[name][style]
 
 
 def get_font_styles(name: str, localized: bool = True) -> list[StyleName]:
-    """Get available font styles."""
+    """Get available font styles.
+    
+    Params:
+    - name: font family name.
+    - localized: whether to lookup localized index.
+
+    Return: a list includes style names.
+    """
     if localized:
         return list(_indexed_fontrefs[unlocalized_name(name)].keys())
     return list(_indexed_fontrefs[name].keys())
