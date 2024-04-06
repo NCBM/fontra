@@ -33,7 +33,7 @@ FontRef(path=PosixPath('/usr/share/fonts/TTF/ariali.ttf'), bank=0)
 FontRef(path=PosixPath('/usr/share/fonts/sarasa-gothic/Sarasa-SemiBoldItalic.ttc'), bank=1)
 ```
 
-- Custom font direciories
+- Custom font directories
 
 ```python-repl
 >>> fontra.FONTDIR_CUSTOM.append("./data/fonts")
