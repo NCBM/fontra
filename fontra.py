@@ -20,7 +20,8 @@ SUPPORTED_EXT: tuple[str, ...] = (
     ".pfa", ".pfb", ".pcf", ".fnt", ".bdf", ".pfr"
 )
 SUPPORTED_EXT += tuple(f.upper() for f in SUPPORTED_EXT)
-_indexed_fontfiles: set[Path] = set()
+_indexed_fontfiles_system: set[Path] = set()
+_indexed_fontfiles_custom: set[Path] = set()
 
 
 class FontRef(NamedTuple):
@@ -31,6 +32,21 @@ class FontRef(NamedTuple):
 
 _indexed_fontrefs: dict[FontFamilyName, dict[StyleName, FontRef]] = {}
 _indexed_langnames: dict[FontFamilyName, FontFamilyName] = {}
+
+
+def sfnt_decode(data: bytes, platform_id: int, language_id: int = -1) -> str:
+    """Decode SFNT content data."""
+    if platform_id != 1:
+        return data.decode("utf-16-be")
+    if language_id == 11:
+        return data.decode("sjis")
+    if language_id == 19:
+        return data.decode("big5")
+    if language_id == 23:
+        return data.decode("euc-kr")
+    if language_id == 33:
+        return data.decode("gb18030")
+    return data.decode()
 
 
 def update_system_fontdirs() -> None:
@@ -69,16 +85,22 @@ def get_fontdirs() -> list[Path]:
     return FONTDIRS_CUSTOM + FONTDIRS_SYSTEM
 
 
-def update_fontfiles_index() -> None:
-    """Update font files index."""
+def update_system_fontfiles_index() -> None:
+    """Update system font files index."""
+    _indexed_fontfiles_system.clear()
     for directory in FONTDIRS_SYSTEM:
         for r, _, fs in os.walk(directory):
-            _indexed_fontfiles.update(
+            _indexed_fontfiles_system.update(
                 {Path(r) / fn for fn in fs if fn.endswith(SUPPORTED_EXT)}
             )
+
+
+def update_custom_fontfiles_index() -> None:
+    """Update font files index."""
+    _indexed_fontfiles_custom.clear()
     for directory in FONTDIRS_CUSTOM:
         for r, _, fs in os.walk(directory):
-            _indexed_fontfiles.update(
+            _indexed_fontfiles_custom.update(
                 {Path(r) / fn for fn in fs if fn.endswith(SUPPORTED_EXT)}
             )
 
@@ -88,23 +110,27 @@ def _update_fontref_index(fn: Path, face: freetype.Face) -> None:
     style = cast(bytes, face.style_name).decode()
     _indexed_fontrefs.setdefault(family, {})
     _indexed_fontrefs[family][style] = FontRef(fn, face.face_index)
-    _indexed_langnames.update(
-        {
-            (
-                sfo.string.decode("utf-16-be" if sfo.platform_id != 1 else "gbk")
-                # here actually I should use platform encoding dictionaries instead
-                #  of single `gbk`, but it'll take some time.
-            ): family
-            for sfo in (
-                face.get_sfnt_name(i) for i in range(face.sfnt_name_count)
-            ) if sfo.name_id in (1, 16)
-        }
-    )
+    if face.is_sfnt:
+        _sfnt_dat = [face.get_sfnt_name(i) for i in range(face.sfnt_name_count)]
+        _ffname = [
+            sfnt_decode(x.string, x.platform_id, x.language_id)
+            for x in _sfnt_dat if x.name_id == 16
+        ]  # use short family name first
+        if not _ffname:  # short family name not exist, use standard name
+            _ffname = [
+                sfnt_decode(x.string, x.platform_id, x.language_id)
+                for x in _sfnt_dat if x.name_id == 1
+            ]
+        _indexed_langnames.update({fn: family for fn in _ffname})
+    else:
+        _indexed_langnames.update({family: family})
 
 
 def update_fontrefs_index():
     """Update font references index."""
-    for fn in _indexed_fontfiles:
+    _indexed_fontrefs.clear()
+    _indexed_langnames.clear()
+    for fn in (*_indexed_fontfiles_system, *_indexed_fontfiles_custom):
         face = freetype.Face(str(fn))
         _update_fontref_index(fn, face)
         for i in range(1, face.num_faces):
@@ -112,15 +138,34 @@ def update_fontrefs_index():
             _update_fontref_index(fn, face)
 
 
-def get_font(name: str, style: str, lookup_langindex: bool = True) -> FontRef:
+def all_fonts() -> list[FontFamilyName]:
+    """Get available fonts, without localized name."""
+    return list(_indexed_fontrefs)
+
+
+def unlocalized_name(name: FontFamilyName) -> FontFamilyName:
+    """Try convert a name into an unlocalized name."""
+    if name in _indexed_langnames:
+        return _indexed_langnames[name]
+    return name
+
+
+def get_font(name: str, style: str, localized: bool = True) -> FontRef:
     """Get info for loading correct font faces."""
-    if lookup_langindex:
-        return _indexed_fontrefs[_indexed_langnames[name]][style]
+    if localized:
+        return _indexed_fontrefs[unlocalized_name(name)][style]
     return _indexed_fontrefs[name][style]
 
 
+def get_font_styles(name: str, localized: bool = True) -> list[StyleName]:
+    """Get available font styles."""
+    if localized:
+        return list(_indexed_fontrefs[unlocalized_name(name)].keys())
+    return list(_indexed_fontrefs[name].keys())
+
+
 update_system_fontdirs()
-update_fontfiles_index()
+update_system_fontfiles_index()
 update_fontrefs_index()
 
 if __name__ == "__main__":
