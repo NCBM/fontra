@@ -19,7 +19,7 @@ pip install fontra
 
 - Common font query
 
-```python-repl
+```python
 >>> import fontra
 >>> fontra.all_fonts()
 ['Noto Sans Lisu', 'Noto Serif Tamil SemiCondensed', 'Noto Serif Georgian', 'Noto Sans Armenian', ...]
@@ -35,7 +35,7 @@ FontRef(path=PosixPath('/usr/share/fonts/sarasa-gothic/Sarasa-SemiBoldItalic.ttc
 
 - Custom font directories
 
-```python-repl
+```python
 >>> fontra.FONTDIR_CUSTOM.append("./data/fonts")
 >>> fontra.update_custom_fontfiles_index()
 >>> fontra.update_fontrefs_index()
