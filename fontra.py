@@ -13,13 +13,24 @@ from typing_extensions import NamedTuple, TypeAlias
 FontFamilyName: TypeAlias = str
 StyleName: TypeAlias = str
 
-FONTDIRS_SYSTEM: list[Path] = []
-FONTDIRS_CUSTOM: list[Path] = []
 SUPPORTED_EXT: tuple[str, ...] = (
     ".ttf", ".ttc", ".otf", ".otc", ".cff", ".woff", ".woff2",
     ".pfa", ".pfb", ".pcf", ".fnt", ".bdf", ".pfr"
 )
 SUPPORTED_EXT += tuple(f.upper() for f in SUPPORTED_EXT)
+
+TT_MS_ENCODING_MAPPING = [
+    "utf-16-be", "utf-16-be", "sjis", "cp936", "big5", "cp949", "johab",
+    "", "", "", "utf-16-be"
+]
+TT_MAC_ENCODING_MAPPING = [
+    "mac-roman", "sjis", "big5", "euc-kr", "mac-arabic", "hebrew",
+    "mac-greek", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
+    "", "", "", "", "", "", "", "", "", "", ""
+]  # undone as less use
+
+FONTDIRS_SYSTEM: list[Path] = []
+FONTDIRS_CUSTOM: list[Path] = []
 _indexed_fontfiles_system: set[Path] = set()
 _indexed_fontfiles_custom: set[Path] = set()
 
@@ -34,19 +45,41 @@ _indexed_fontrefs: dict[FontFamilyName, dict[StyleName, FontRef]] = {}
 _indexed_langnames: dict[FontFamilyName, FontFamilyName] = {}
 
 
-def sfnt_decode(data: bytes, platform_id: int, language_id: int = -1) -> str:
-    """Decode SFNT content data."""
-    if platform_id != 1:
-        return data.decode("utf-16-be")
-    if language_id == 11:
-        return data.decode("sjis")
-    if language_id == 19:
-        return data.decode("big5")
-    if language_id == 23:
-        return data.decode("euc-kr")
-    if language_id == 33:
-        return data.decode("gb18030")
-    return data.decode()
+def _get_encoding(pid: int, eid: int, lid: int) -> str:
+    # assert freetype.TT_PLATFORM_APPLE_UNICODE == 0
+    if pid == 0:
+        return "utf-16-be"
+    # assert freetype.TT_PLATFORM_MACINTOSH == 1
+    if pid == 1:
+        if eid == 25 and lid == 33:
+            return "gb18030"
+        return TT_MAC_ENCODING_MAPPING[eid] or "unicode_escape"
+    # assert freetype.TT_PLATFORM_MICROSOFT == 3
+    if pid == 3:
+        return TT_MS_ENCODING_MAPPING[eid]
+    return "unicode_escape"
+
+
+def _get_localized_family_name(face: freetype.Face) -> list[tuple[str, int, int, int]]:
+    # assert freetype.TT_NAME_ID_FONT_FAMILY == 1
+    # assert freetype.TT_NAME_ID_PREFERRED_FAMILY == 16
+    _ffname = [
+        (x.string, x.name_id, x.platform_id, x.encoding_id, x.language_id)
+        for x in (
+            face.get_sfnt_name(i) for i in range(face.sfnt_name_count)
+        ) if x.name_id == 16
+    ]
+    if not _ffname:
+        _ffname = [
+            (x.string, x.name_id, x.platform_id, x.encoding_id, x.language_id)
+            for x in (
+                face.get_sfnt_name(i) for i in range(face.sfnt_name_count)
+            ) if x.name_id == 1
+        ]
+    return [
+        (s.decode(_get_encoding(pid, eid, lid)), pid, eid, lid)
+        for s, _, pid, eid, lid in _ffname
+    ]
 
 
 def update_system_fontdirs() -> None:
@@ -64,9 +97,9 @@ def update_system_fontdirs() -> None:
             FONTDIRS_SYSTEM.append(Path(windir) / "fonts")
     elif sys.platform in ("linux", "linux2"):
         if not (xdgdata := os.getenv("XDG_DATA_DIRS")):
-            # thank you xdg
-            # (some weird platforms does not have `/usr/share`)
+            # some weird platforms does not have `/usr/share`
             xdgdata = "/usr/share" if os.path.exists("/usr/share") else ""
+        # thank you xdg
         FONTDIRS_SYSTEM.extend(
             Path(datadir) / "fonts"
             for datadir in xdgdata.split(":") if datadir
@@ -111,17 +144,8 @@ def _update_fontref_index(fn: Path, face: freetype.Face) -> None:
     _indexed_fontrefs.setdefault(family, {})
     _indexed_fontrefs[family][style] = FontRef(fn, face.face_index)
     if face.is_sfnt:
-        _sfnt_dat = [face.get_sfnt_name(i) for i in range(face.sfnt_name_count)]
-        _ffname = [
-            sfnt_decode(x.string, x.platform_id, x.language_id)
-            for x in _sfnt_dat if x.name_id == 16
-        ]  # use short family name first
-        if not _ffname:  # short family name not exist, use standard name
-            _ffname = [
-                sfnt_decode(x.string, x.platform_id, x.language_id)
-                for x in _sfnt_dat if x.name_id == 1
-            ]
-        _indexed_langnames.update({fn: family for fn in _ffname})
+        _ffname = _get_localized_family_name(face)
+        _indexed_langnames.update({fn: family for fn, *_ in _ffname})
     else:
         _indexed_langnames.update({family: family})
 
