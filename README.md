@@ -1,5 +1,8 @@
 # fontra
 
+![PyPI Version](https://img.shields.io/pypi/v/fontra) | ![PyPI Downloads](https://img.shields.io/pypi/dm/fontra)
+| ![License](https://img.shields.io/github/license/NCBM/fontra)
+
 Some small work with fonts.
 
 ## Features
