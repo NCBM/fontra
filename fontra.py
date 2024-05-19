@@ -145,9 +145,7 @@ def _update_fontref_index(fn: Path, face: freetype.Face) -> None:
     _indexed_fontrefs[family][style] = FontRef(fn, face.face_index)
     if face.is_sfnt:
         _ffname = _get_localized_family_name(face)
-        _indexed_langnames.update({fn: family for fn, *_ in _ffname})
-    else:
-        _indexed_langnames.update({family: family})
+        _indexed_langnames.update({fn: family for fn, *_ in _ffname if fn != family})
 
 
 def update_fontrefs_index():
@@ -174,9 +172,7 @@ def all_fonts() -> list[FontFamilyName]:
 
 def unlocalized_name(name: FontFamilyName) -> FontFamilyName:
     """Try convert a name into an unlocalized name."""
-    if name in _indexed_langnames:
-        return _indexed_langnames[name]
-    return name
+    return _indexed_langnames.get(name, name)
 
 
 def get_font(name: str, style: str, localized: bool = True) -> FontRef:
@@ -189,9 +185,12 @@ def get_font(name: str, style: str, localized: bool = True) -> FontRef:
 
     Return: a named tuple includes file path and collection index.
     """
-    if localized:
-        return _indexed_fontrefs[unlocalized_name(name)][style]
-    return _indexed_fontrefs[name][style]
+    name = unlocalized_name(name) if localized else name
+    if name not in _indexed_fontrefs:
+        raise KeyError(f"Font {name!r} not found")
+    if style not in (_fonts := _indexed_fontrefs[name]):
+        raise KeyError(f"Font style {style!r} of font {name!r} not found")
+    return _fonts[style]
 
 
 def get_font_styles(name: str, localized: bool = True) -> list[StyleName]:
@@ -203,9 +202,10 @@ def get_font_styles(name: str, localized: bool = True) -> list[StyleName]:
 
     Return: a list includes style names.
     """
-    if localized:
-        return list(_indexed_fontrefs[unlocalized_name(name)].keys())
-    return list(_indexed_fontrefs[name].keys())
+    name = unlocalized_name(name) if localized else name
+    if name not in _indexed_fontrefs:
+        raise KeyError(f"Font {name!r} not found")
+    return [st for st in _indexed_fontrefs[name]]
 
 
 update_system_fontdirs()
