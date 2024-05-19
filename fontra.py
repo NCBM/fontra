@@ -175,7 +175,7 @@ def unlocalized_name(name: FontFamilyName) -> FontFamilyName:
     return _indexed_langnames.get(name, name)
 
 
-def get_font(name: str, style: str, localized: bool = True) -> FontRef:
+def get_font(name: FontFamilyName, style: str, localized: bool = True) -> FontRef:
     """Get info for loading correct font faces.
     
     Params:
@@ -193,7 +193,7 @@ def get_font(name: str, style: str, localized: bool = True) -> FontRef:
     return _fonts[style]
 
 
-def get_font_styles(name: str, localized: bool = True) -> list[StyleName]:
+def get_font_styles(name: FontFamilyName, localized: bool = True) -> list[StyleName]:
     """Get available font styles.
     
     Params:
@@ -206,6 +206,16 @@ def get_font_styles(name: str, localized: bool = True) -> list[StyleName]:
     if name not in _indexed_fontrefs:
         raise KeyError(f"Font {name!r} not found")
     return [st for st in _indexed_fontrefs[name]]
+
+
+def has_font_family(name: FontFamilyName, localized: bool = True) -> bool:
+    name = unlocalized_name(name) if localized else name
+    return name in _indexed_fontrefs
+
+
+def has_font_style(name: FontFamilyName, style: str, localized: bool = True) -> bool:
+    name = unlocalized_name(name) if localized else name
+    return name in _indexed_fontrefs and style in _indexed_fontrefs[name]
 
 
 update_system_fontdirs()
