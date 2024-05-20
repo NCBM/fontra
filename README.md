@@ -30,6 +30,10 @@ pip install fontra
 ['Regular', 'Italic', 'Bold', 'Bold Italic', 'Black']
 >>> fontra.get_font("Arial", "Italic")
 FontRef(path=PosixPath('/usr/share/fonts/TTF/ariali.ttf'), bank=0)
+>>> fontra.has_font_family("Helvetica")
+False
+>>> fontra.has_font_style("Comic Sans MS", "Light")
+False
 >>> fontra.unlocalized_name("更紗ゴシック UI J")
 'Sarasa UI J'
 >>> fontra.get_font("更纱黑体 SC", "SemiBold Italic")
