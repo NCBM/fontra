@@ -1,6 +1,6 @@
 [project]
 name = "fontra"
-version = "0.2.3"
+version = "0.2.4"
 description = "Some small work with fonts."
 authors = [
     {name = "HivertMoZara", email = "worldmozara@163.com"},
