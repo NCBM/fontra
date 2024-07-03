@@ -148,7 +148,7 @@ def _update_fontref_index(fn: Path, face: freetype.Face) -> None:
         _indexed_langnames.update({fn: family for fn, *_ in _ffname if fn != family})
 
 
-def _ft_open_face(fn: Path) -> freetype.Face:
+def _ft_open_face(fn: Path, index: int = 0) -> freetype.Face:
     if os.name == "nt":
         return freetype.Face(open(fn, "rb"))
     return freetype.Face(str(fn))
@@ -162,7 +162,7 @@ def update_fontrefs_index():
         face = _ft_open_face(fn)
         _update_fontref_index(fn, face)
         for i in range(1, face.num_faces):
-            face = freetype.Face(str(fn), i)
+            face = _ft_open_face(fn, i)
             _update_fontref_index(fn, face)
 
 
