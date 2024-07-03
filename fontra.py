@@ -148,12 +148,18 @@ def _update_fontref_index(fn: Path, face: freetype.Face) -> None:
         _indexed_langnames.update({fn: family for fn, *_ in _ffname if fn != family})
 
 
+def _ft_open_face(fn: Path) -> freetype.Face:
+    if os.name == "nt":
+        return freetype.Face(open(fn, "rb"))
+    return freetype.Face(str(fn))
+
+
 def update_fontrefs_index():
     """Update font references index."""
     _indexed_fontrefs.clear()
     _indexed_langnames.clear()
     for fn in (*_indexed_fontfiles_system, *_indexed_fontfiles_custom):
-        face = freetype.Face(str(fn))
+        face = _ft_open_face(fn)
         _update_fontref_index(fn, face)
         for i in range(1, face.num_faces):
             face = freetype.Face(str(fn), i)
