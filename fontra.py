@@ -4,10 +4,13 @@ some small work with fonts.
 
 import os
 import sys
+import warnings
 from pathlib import Path
+from traceback import print_exc
 from typing import cast
 
 import freetype
+import freetype.ft_errors
 from typing_extensions import NamedTuple, TypeAlias
 
 FontFamilyName: TypeAlias = str
@@ -159,7 +162,15 @@ def update_fontrefs_index():
     _indexed_fontrefs.clear()
     _indexed_langnames.clear()
     for fn in (*_indexed_fontfiles_system, *_indexed_fontfiles_custom):
-        face = _ft_open_face(fn)
+        try:
+            face = _ft_open_face(fn)
+        except freetype.ft_errors.FT_Exception:
+            warnings.warn(
+                f"Some error occurred when loading font {str(fn)!r}, "
+                "skipped.\n"
+            )
+            print_exc()
+            continue
         _update_fontref_index(fn, face)
         for i in range(1, face.num_faces):
             face = _ft_open_face(fn, i)
