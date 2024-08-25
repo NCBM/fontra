@@ -210,10 +210,16 @@ def get_font(name: FontFamilyName, style: str, localized: bool = True) -> FontRe
     name = get_unlocalized_name(name) if localized else name
     if name not in _indexed_fontrefs:
         match = get_close_matches(name, _indexed_fontrefs.keys())
-        raise KeyError(f"Font {name!r} not found. Did you mean {match[0]!r} ?")
+        raise KeyError(
+            f"Font {name!r} not found."
+            + (f" Did you mean {match[0]!r} ?" if match else "")
+        )
     if style not in (_fonts := _indexed_fontrefs[name]):
         match = get_close_matches(style, _fonts.keys())
-        raise KeyError(f"Font style {style!r} of font {name!r} not found. Did you mean '{match[0]!r}' ?")
+        raise KeyError(
+            f"Font style {style!r} of font {name!r} not found."
+            + (f" Did you mean {match[0]!r} ?" if match else "")
+        )
     return _fonts[style]
 
 
@@ -229,7 +235,10 @@ def get_font_styles(name: FontFamilyName, localized: bool = True) -> list[StyleN
     name = get_unlocalized_name(name) if localized else name
     if name not in _indexed_fontrefs:
         match = get_close_matches(name, _indexed_fontrefs.keys())
-        raise KeyError(f"Font {name!r} not found. Did you mean {match[0]!r} ?")
+        raise KeyError(
+            f"Font {name!r} not found."
+            + (f" Did you mean {match[0]!r} ?" if match else "")
+        )
     return [st for st in _indexed_fontrefs[name]]
 
 
