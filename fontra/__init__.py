@@ -11,6 +11,7 @@ from typing import cast
 
 import freetype
 import freetype.ft_errors
+from difflib import get_close_matches
 from typing_extensions import NamedTuple, TypeAlias
 
 FontFamilyName: TypeAlias = str
@@ -208,9 +209,11 @@ def get_font(name: FontFamilyName, style: str, localized: bool = True) -> FontRe
     """
     name = get_unlocalized_name(name) if localized else name
     if name not in _indexed_fontrefs:
-        raise KeyError(f"Font {name!r} not found")
+        match = get_close_matches(name, _indexed_fontrefs.keys())
+        raise KeyError(f"Font {name!r} not found. Did you mean {match[0]!r} ?")
     if style not in (_fonts := _indexed_fontrefs[name]):
-        raise KeyError(f"Font style {style!r} of font {name!r} not found")
+        match = get_close_matches(style, _fonts.keys())
+        raise KeyError(f"Font style {style!r} of font {name!r} not found. Did you mean '{match[0]!r}' ?")
     return _fonts[style]
 
 
@@ -225,7 +228,8 @@ def get_font_styles(name: FontFamilyName, localized: bool = True) -> list[StyleN
     """
     name = get_unlocalized_name(name) if localized else name
     if name not in _indexed_fontrefs:
-        raise KeyError(f"Font {name!r} not found")
+        match = get_close_matches(name, _indexed_fontrefs.keys())
+        raise KeyError(f"Font {name!r} not found. Did you mean {match[0]!r} ?")
     return [st for st in _indexed_fontrefs[name]]
 
 
