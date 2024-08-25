@@ -7,7 +7,7 @@ import sys
 import warnings
 from pathlib import Path
 from traceback import print_exc
-from typing import cast
+from typing import cast, Union
 
 import freetype
 import freetype.ft_errors
@@ -84,6 +84,26 @@ def _get_localized_family_name(face: freetype.Face) -> list[tuple[str, int, int,
         (s.decode(_get_encoding(pid, eid, lid)), pid, eid, lid)
         for s, _, pid, eid, lid in _ffname
     ]
+
+
+def match_font_name(font_name: str) -> Union[str, None]:
+    match = get_close_matches(font_name, _indexed_fontrefs.keys())
+    return match[0] if match else None
+
+
+def match_font_names(font_name: str) -> list[str]:
+    match = get_close_matches(font_name, _indexed_fontrefs.keys())
+    return match
+
+
+def match_font_style(font_name: str, font_style: str) -> Union[str, None]:
+    match = get_close_matches(font_style, _indexed_fontrefs[font_name].keys())
+    return match[0] if match else None
+
+
+def match_font_styles(font_name: str, font_style: str) -> list[str]:
+    match = get_close_matches(font_style, _indexed_fontrefs[font_name].keys())
+    return match
 
 
 def update_system_fontdirs() -> None:
@@ -197,47 +217,57 @@ def get_localized_names(name: FontFamilyName) -> list[FontFamilyName]:
     return [k for k, v in _indexed_langnames.items() if v == name]
 
 
-def get_font(name: FontFamilyName, style: str, localized: bool = True) -> FontRef:
+def get_font(name: FontFamilyName, style: str, localized: bool = True, fuzzy: bool = False) -> FontRef:
     """Get info for loading correct font faces.
     
     Params:
     - name: font family name.
     - style: font style.
     - localized: whether to lookup localized index.
+    - fuzzy: whether to fuzzy match.
 
     Return: a named tuple includes file path and collection index.
     """
     name = get_unlocalized_name(name) if localized else name
     if name not in _indexed_fontrefs:
-        match = get_close_matches(name, _indexed_fontrefs.keys())
-        raise KeyError(
-            f"Font {name!r} not found."
-            + (f" Did you mean {match[0]!r} ?" if match else "")
-        )
+        match = match_font_name(name)
+        if fuzzy and match:
+            name = match
+        else:
+            raise KeyError(
+                f"Font {name!r} not found."
+                + (f" Did you mean {match!r} ?" if match else "")
+            )
     if style not in (_fonts := _indexed_fontrefs[name]):
-        match = get_close_matches(style, _fonts.keys())
-        raise KeyError(
-            f"Font style {style!r} of font {name!r} not found."
-            + (f" Did you mean {match[0]!r} ?" if match else "")
-        )
+        match = match_font_style(name, style)
+        if fuzzy and match:
+            style = match
+        else:
+            raise KeyError(
+                f"Font style {style!r} of font {name!r} not found."
+                + (f" Did you mean {match!r} ?" if match else "")
+            )
     return _fonts[style]
 
 
-def get_font_styles(name: FontFamilyName, localized: bool = True) -> list[StyleName]:
+def get_font_styles(name: FontFamilyName, localized: bool = True, fuzzy: bool = False) -> list[StyleName]:
     """Get available font styles.
     
     Params:
     - name: font family name.
     - localized: whether to lookup localized index.
+    - fuzzy: whether to fuzzy match.
 
     Return: a list includes style names.
     """
     name = get_unlocalized_name(name) if localized else name
     if name not in _indexed_fontrefs:
-        match = get_close_matches(name, _indexed_fontrefs.keys())
+        match = match_font_name(name)
+        if fuzzy and match:
+            return [st for st in _indexed_fontrefs[match]]
         raise KeyError(
             f"Font {name!r} not found."
-            + (f" Did you mean {match[0]!r} ?" if match else "")
+            + (f" Did you mean {match!r} ?" if match else "")
         )
     return [st for st in _indexed_fontrefs[name]]
 
