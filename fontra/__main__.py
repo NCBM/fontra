@@ -12,8 +12,13 @@ from rich.table import Table, box
 from typer import Option, Argument
 from rich.progress import Progress
 
-from fontra import all_fonts, get_fontdirs, get_font_styles, unlocalized_name, FontFamilyName
-
+from fontra import (
+    FontFamilyName,
+    all_fonts,
+    get_font_styles,
+    get_fontdirs,
+    get_unlocalized_name,
+)
 
 app = typer.Typer(no_args_is_help=True)
 console = Console()
@@ -89,7 +94,7 @@ def show(
 
 @app.command(help="Convert a name into an unlocalized name.")
 def unlocalized(name: Annotated[FontFamilyName, Argument(help="Font family name.")]) -> None:
-    console.print(f"Unlocalized name: {unlocalized_name(name)}")
+    console.print(f"Unlocalized name: {get_unlocalized_name(name)}")
 
 
 @app.command(help="Convert TTC to TTF", rich_help_panel="Utils", hidden=check_font_tools_installed())

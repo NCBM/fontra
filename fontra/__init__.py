@@ -187,7 +187,7 @@ def all_fonts() -> list[FontFamilyName]:
     return list(_indexed_fontrefs)
 
 
-def unlocalized_name(name: FontFamilyName) -> FontFamilyName:
+def get_unlocalized_name(name: FontFamilyName) -> FontFamilyName:
     """Try convert a name into an unlocalized name."""
     return _indexed_langnames.get(name, name)
 
@@ -206,7 +206,7 @@ def get_font(name: FontFamilyName, style: str, localized: bool = True) -> FontRe
 
     Return: a named tuple includes file path and collection index.
     """
-    name = unlocalized_name(name) if localized else name
+    name = get_unlocalized_name(name) if localized else name
     if name not in _indexed_fontrefs:
         raise KeyError(f"Font {name!r} not found")
     if style not in (_fonts := _indexed_fontrefs[name]):
@@ -223,19 +223,19 @@ def get_font_styles(name: FontFamilyName, localized: bool = True) -> list[StyleN
 
     Return: a list includes style names.
     """
-    name = unlocalized_name(name) if localized else name
+    name = get_unlocalized_name(name) if localized else name
     if name not in _indexed_fontrefs:
         raise KeyError(f"Font {name!r} not found")
     return [st for st in _indexed_fontrefs[name]]
 
 
 def has_font_family(name: FontFamilyName, localized: bool = True) -> bool:
-    name = unlocalized_name(name) if localized else name
+    name = get_unlocalized_name(name) if localized else name
     return name in _indexed_fontrefs
 
 
 def has_font_style(name: FontFamilyName, style: str, localized: bool = True) -> bool:
-    name = unlocalized_name(name) if localized else name
+    name = get_unlocalized_name(name) if localized else name
     return name in _indexed_fontrefs and style in _indexed_fontrefs[name]
 
 
