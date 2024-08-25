@@ -192,6 +192,10 @@ def unlocalized_name(name: FontFamilyName) -> FontFamilyName:
     return _indexed_langnames.get(name, name)
 
 
+def get_localized_names(name: FontFamilyName) -> list[FontFamilyName]:
+    return [k for k, v in _indexed_langnames.items() if v == name]
+
+
 def get_font(name: FontFamilyName, style: str, localized: bool = True) -> FontRef:
     """Get info for loading correct font faces.
     
