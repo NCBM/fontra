@@ -113,11 +113,12 @@ def path() -> None:
 @app.command(help="Show the font information.")
 def show(
     name: Annotated[List[FontFamilyName], Argument(help="Font family name.")], 
-    localized: Annotated[bool, Option(help="Whether to lookup localized index.")] = True
+    localized: Annotated[bool, Option(help="Whether to lookup localized index.")] = True,
+    fuzzy: Annotated[bool, Option("--fuzzy/--no-fuzzy", "-f/-F", help="Whether to fuzzy match.")] = False
 ) -> None:
     try:
         font_name = " ".join(name)
-        styles = get_font_styles(font_name, localized)
+        styles = get_font_styles(font_name, localized, fuzzy)
         console.print(f"The font family '{font_name}' contains {len(styles)} styles:")
         for style in styles:
             console.print(f"- {style}")
