@@ -1,16 +1,15 @@
 """Fontra CLI application."""
 
-import typer
-
-from pathlib import Path
 from importlib.metadata import version
-from typing import List, Annotated, Optional
+from pathlib import Path
+from typing import Annotated, List, Optional
 
-from rich.tree import Tree
+import typer
 from rich.console import Console
-from rich.table import Table, box
-from typer import Option, Argument
 from rich.progress import Progress
+from rich.table import Table, box
+from rich.tree import Tree
+from typer import Argument, Option
 
 from fontra import (
     FontFamilyName,
@@ -24,12 +23,12 @@ app = typer.Typer(no_args_is_help=True)
 console = Console()
 
 
-def check_font_tools_installed() -> bool:
+def check_fonttools_installed() -> bool:
     try:
-        import fontTools  # noqa: F401
-        return False
-    except ModuleNotFoundError:
+        import fontTools  # noqa: F401  # pyright: ignore[reportUnusedImport, reportMissingImports]
         return True
+    except ModuleNotFoundError:
+        return False
 
 
 try:
@@ -56,25 +55,31 @@ def callback(
 
 
 @app.command(help="List available fonts, without localized name.")
-def list(tree: Annotated[Optional[bool], Option(help="Display a tree of fonts")] = False) -> None:
+def list(
+    tree: Annotated[Optional[bool], Option(help="Display a tree of fonts")] = False,
+    sort: Annotated[Optional[bool], Option(help="Output with sorted font names")] = False
+) -> None:
     fonts = all_fonts()
+    if sort:
+        fonts.sort()
     if tree:
         fonts_tree = Tree("Fonts")
         for font in fonts:
-            fonts_tree.add("[blue]" + font).add(" | ".join(get_font_styles(font)))
+            _tree = fonts_tree.add("[blue]" + font)
+            for style in get_font_styles(font):
+                _tree.add(style)
     else:
         fonts_table = Table("Name", "Style", box=box.DOUBLE_EDGE, show_lines=True)
         for font in fonts:
             fonts_table.add_row(font, " | ".join(get_font_styles(font)))
     console.print(f"There are {len(fonts)} fonts.")
-    console.print(fonts_tree if tree else fonts_table)
+    console.print(fonts_tree if tree else fonts_table)  # pyright: ignore[reportPossiblyUnboundVariable]
 
 
 @app.command(help="Show the font directories.")
 def path() -> None:
-    FONTDIRS_CUSTOM, FONTDIRS_SYSTEM = get_fontdirs()
-    console.print(f"User: {FONTDIRS_CUSTOM}")
-    console.print(f"System: {FONTDIRS_SYSTEM}")
+    for dir in get_fontdirs():
+        console.print(f"- {dir!s}")
 
 
 @app.command(help="Show the font information.")
@@ -97,13 +102,15 @@ def unlocalized(name: Annotated[FontFamilyName, Argument(help="Font family name.
     console.print(f"Unlocalized name: {get_unlocalized_name(name)}")
 
 
-@app.command(help="Convert TTC to TTF", rich_help_panel="Utils", hidden=check_font_tools_installed())
+@app.command(help="Convert TTC to TTF", rich_help_panel="Utils", hidden=not check_fonttools_installed())
 def unpack(
     path: Annotated[Path, Argument(help="Path to the font file.")],
     output: Annotated[Optional[Path], Option(help="Path to the output directory.")] = None,
 ) -> None:
     try:
-        from fontTools.ttLib.ttCollection import TTCollection
+        from fontTools.ttLib.ttCollection import (  # noqa: F401  # pyright: ignore[reportMissingImports]
+            TTCollection,
+        )
     except ModuleNotFoundError:
         console.print(
             "Error: Please install fontTools first to use fontra cli utils.",
