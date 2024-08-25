@@ -153,8 +153,8 @@ def _update_fontref_index(fn: Path, face: freetype.Face) -> None:
 
 def _ft_open_face(fn: Path, index: int = 0) -> freetype.Face:
     if os.name == "nt":
-        return freetype.Face(open(fn, "rb"))
-    return freetype.Face(str(fn))
+        return freetype.Face(open(fn, "rb"), index)
+    return freetype.Face(str(fn), index)
 
 
 def update_fontrefs_index():
