@@ -16,6 +16,7 @@ from fontra import (
     all_fonts,
     get_font_styles,
     get_fontdirs,
+    get_localized_names,
     get_unlocalized_name,
 )
 
@@ -54,10 +55,23 @@ def callback(
     """Hello Fontra"""
 
 
-@app.command(help="List available fonts, without localized name.")
+@app.command(help="List available fonts.")
 def list(
-    tree: Annotated[Optional[bool], Option(help="Display a tree of fonts")] = False,
-    sort: Annotated[Optional[bool], Option(help="Output with sorted font names")] = False
+    tree: Annotated[
+        Optional[bool],
+        Option("--tree/--table", "-t/-T", help="Display a tree of fonts")
+    ] = False,
+    sort: Annotated[
+        Optional[bool],
+        Option("--sort/--no-sort", "-s/-S", help="Output with sorted font names")
+    ] = False,
+    locnames: Annotated[
+        Optional[bool],
+        Option(
+            "--with-localized-names/--without-localized-names", "-l/-L",
+            help="Output with localized font names"
+        )
+    ] = False
 ) -> None:
     fonts = all_fonts()
     if sort:
@@ -65,14 +79,28 @@ def list(
     if tree:
         fonts_tree = Tree("Fonts")
         for font in fonts:
-            _tree = fonts_tree.add("[blue]" + font)
+            if locnames and (_names := get_localized_names(font)):
+                _label = (
+                    f"[blue]{font}[/] ([yellow]"
+                    + "[/], [yellow]".join(_names) + "[/])"
+                )
+            else:
+                _label = f"[blue]{font}[/]"
+            _tree = fonts_tree.add(_label)
             for style in get_font_styles(font):
                 _tree.add(style)
     else:
         fonts_table = Table("Name", "Style", box=box.DOUBLE_EDGE, show_lines=True)
         for font in fonts:
-            fonts_table.add_row(font, " | ".join(get_font_styles(font)))
-    console.print(f"There are {len(fonts)} fonts.")
+            if locnames and (_names := get_localized_names(font)):
+                _fns = (
+                    f"[blue]{font}[/]\n[yellow]"
+                    + "[/]\n[yellow]".join(_names) + "[/]"
+                )
+            else:
+                _fns = f"[blue]{font}[/]"
+            fonts_table.add_row(_fns, " | ".join(get_font_styles(font)))
+    console.print(f"{len(fonts)} font(s) found.")
     console.print(fonts_tree if tree else fonts_table)  # pyright: ignore[reportPossiblyUnboundVariable]
 
 
