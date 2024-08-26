@@ -90,6 +90,12 @@ FontRef(path=PosixPath('/usr/share/fonts/sarasa-gothic/Sarasa-SemiBoldItalic.ttc
 [...]
 ```
 
+#### From environment variable
+
+```shell
+PYFONTRA_CUSTOM_FONTDIRS=~/.fonts fontra 
+```
+
 ## License
 
 This project is under [MIT License](./LICENSE).
