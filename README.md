@@ -60,6 +60,7 @@ fontra --help
 
 ```python
 >>> import fontra
+>>> fontra.init_fontdb()  # Initialize and search fonts
 >>> fontra.all_fonts()
 ['Noto Sans Lisu', 'Noto Serif Tamil SemiCondensed', 'Noto Serif Georgian', 'Noto Sans Armenian', ...]
 >>> fontra.get_font_styles("Arial")
@@ -81,7 +82,8 @@ FontRef(path=PosixPath('/usr/share/fonts/sarasa-gothic/Sarasa-SemiBoldItalic.ttc
 ### Custom font directories
 
 ```python
->>> fontra.FONTDIR_CUSTOM.append("./data/fonts")
+>>> from pathlib import Path
+>>> fontra.FONTDIR_CUSTOM.append(Path("~/.fonts"))
 >>> fontra.update_custom_fontfiles_index()
 >>> fontra.update_fontrefs_index()
 >>> fontra.all_fonts()
