@@ -54,6 +54,10 @@ fontra --help
                                             Whether to fuzzy match.
        unlocalize NAME
                                             Convert a name into an unlocalized name.
+       unpack PATH
+                                            Unpack a TTC to TTF. (Requires fontra[tools] installed)
+              --output OUTPUT
+                                            Path to the output directory.
 ```
 
 ### Font indexing and querying

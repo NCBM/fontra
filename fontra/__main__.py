@@ -134,7 +134,7 @@ def unlocalize(name: Annotated[FontFamilyName, Argument(help="Font family name."
     console.print(f"Unlocalized name: {get_unlocalized_name(name)}")
 
 
-@app.command(help="Convert TTC to TTF", rich_help_panel="Utils", hidden=not check_fonttools_installed())
+@app.command(help="Unpack a TTC to TTF.", rich_help_panel="Utils", hidden=not check_fonttools_installed())
 def unpack(
     path: Annotated[Path, Argument(help="Path to the font file.")],
     output: Annotated[Optional[Path], Option(help="Path to the output directory.")] = None,
