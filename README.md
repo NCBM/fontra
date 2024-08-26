@@ -42,15 +42,17 @@ fontra --help
                                             Whether to display a tree or a table.
             --sort/[--no-sort] | -s/[-S]
                                             Whether to output with sorted font names.
-            --with-localized-names/[--without-localized-names] | -l/[-L]
+            --localized/[--unlocalized] | -l/[-L]
                                             Whether to show localized font names.
        path
                                             Show the font directories.
-       show
+       show NAME...
                                             Show the font information.
-            [--localized]/--no-localized NAME...  # will fix name in next version
+            [--localized]/--unlocalized | -l/[-L]
                                             Whether to lookup the localized index.
-       unlocalized NAME  # will fix name in next version
+            --fuzzy/[--exact] | -f/[-F]
+                                            Whether to fuzzy match.
+       unlocalize NAME
                                             Convert a name into an unlocalized name.
 ```
 

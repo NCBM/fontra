@@ -18,12 +18,10 @@ from fontra import (
     get_fontdirs,
     get_localized_names,
     get_unlocalized_name,
-    init_by_environ,
     init_fontdb,
 )
 
-if not init_by_environ:
-    init_fontdb()
+init_fontdb()
 
 app = typer.Typer(no_args_is_help=True)
 console = Console()
@@ -64,17 +62,17 @@ def callback(
 def list(
     tree: Annotated[
         Optional[bool],
-        Option("--tree/--table", "-t/-T", help="Display a tree of fonts")
+        Option("--tree/--table", "-t/-T", help="Whether to display a tree or a table.")
     ] = False,
     sort: Annotated[
         Optional[bool],
-        Option("--sort/--no-sort", "-s/-S", help="Output with sorted font names")
+        Option("--sort/--no-sort", "-s/-S", help="Whether to output with sorted font names.")
     ] = False,
     locnames: Annotated[
         Optional[bool],
         Option(
-            "--with-localized-names/--without-localized-names", "-l/-L",
-            help="Output with localized font names"
+            "--localized/--unlocalized", "-l/-L",
+            help="Whether to show localized font names."
         )
     ] = False
 ) -> None:
@@ -118,8 +116,8 @@ def path() -> None:
 @app.command(help="Show the font information.")
 def show(
     name: Annotated[List[FontFamilyName], Argument(help="Font family name.")], 
-    localized: Annotated[bool, Option(help="Whether to lookup localized index.")] = True,
-    fuzzy: Annotated[bool, Option("--fuzzy/--no-fuzzy", "-f/-F", help="Whether to fuzzy match.")] = False
+    localized: Annotated[bool, Option("--localized/--unlocalized", "-l/-L", help="Whether to show localized font name.")] = True,
+    fuzzy: Annotated[bool, Option("--fuzzy/--exact", "-f/-F", help="Whether to fuzzy match.")] = False
 ) -> None:
     try:
         font_name = " ".join(name)
@@ -132,7 +130,7 @@ def show(
 
 
 @app.command(help="Convert a name into an unlocalized name.")
-def unlocalized(name: Annotated[FontFamilyName, Argument(help="Font family name.")]) -> None:
+def unlocalize(name: Annotated[FontFamilyName, Argument(help="Font family name.")]) -> None:
     console.print(f"Unlocalized name: {get_unlocalized_name(name)}")
 
 
