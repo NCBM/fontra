@@ -23,13 +23,20 @@ from .fzmatch import match_font_styles as match_font_styles
 from .typing import FontFamilyName, StyleName
 from .typing import FontRef as FontRef
 
+init_by_environ: bool = False
 
-def init_fontdb(*custom_dirs: Path):
+
+def init_fontdb(*custom_dirs: Path, accept_envvars: bool = True):
     update_system_fontdirs()
     update_system_fontfiles_index()
     if custom_dirs:
         FONTDIRS_CUSTOM.extend(custom_dirs)
-        update_custom_fontfiles_index()
+    if accept_envvars:
+        FONTDIRS_CUSTOM.extend(
+            Path(x) for x in
+            os.environ.get("PYFONTRA_CUSTOM_FONTDIRS", "").split(os.pathsep) if x
+        )
+    update_custom_fontfiles_index()
     update_fontrefs_index()
 
 
@@ -99,9 +106,5 @@ def has_font_style(name: FontFamilyName, style: str, localized: bool = True) -> 
 
 
 if os.environ.get("PYFONTRA_INIT_FONTDB", "0") == "1":
-    init_fontdb(
-        *(
-            Path(x) for x in
-            os.environ.get("PYFONTRA_CUSTOM_FONTDIRS", "").split(os.pathsep) if x
-        )
-    )
+    init_fontdb()
+    init_by_environ = True

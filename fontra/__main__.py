@@ -18,7 +18,12 @@ from fontra import (
     get_fontdirs,
     get_localized_names,
     get_unlocalized_name,
+    init_by_environ,
+    init_fontdb,
 )
+
+if not init_by_environ:
+    init_fontdb()
 
 app = typer.Typer(no_args_is_help=True)
 console = Console()
