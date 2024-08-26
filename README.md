@@ -44,8 +44,8 @@ fontra --help
                                             Whether to output with sorted font names.
             --localized/[--unlocalized] | -l/[-L]
                                             Whether to show localized font names.
-       path
-                                            Show the font directories.
+       fontdirs
+                                            Show the font search directories.
        show NAME...
                                             Show the font information.
             [--localized]/--unlocalized | -l/[-L]

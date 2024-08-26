@@ -107,8 +107,8 @@ def list(
     console.print(fonts_tree if tree else fonts_table)  # pyright: ignore[reportPossiblyUnboundVariable]
 
 
-@app.command(help="Show the font directories.")
-def path() -> None:
+@app.command(help="Show the font search directories.")
+def fontdirs() -> None:
     for dir in get_fontdirs():
         console.print(f"- {dir!s}")
 
