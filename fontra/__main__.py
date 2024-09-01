@@ -1,8 +1,9 @@
 """Fontra CLI application."""
 
+from collections.abc import Sequence
 from importlib.metadata import version
 from pathlib import Path
-from typing import Annotated, List, Optional
+from typing import Annotated, Optional, cast
 
 import typer
 from rich.console import Console
@@ -12,7 +13,6 @@ from rich.tree import Tree
 from typer import Argument, Option
 
 from fontra import (
-    FontFamilyName,
     all_fonts,
     get_font_styles,
     get_fontdirs,
@@ -20,6 +20,7 @@ from fontra import (
     get_unlocalized_name,
     init_fontdb,
 )
+from fontra.typing import FontFamilyName
 
 init_fontdb()
 
@@ -29,7 +30,7 @@ console = Console()
 
 def check_fonttools_installed() -> bool:
     try:
-        import fontTools  # noqa: F401  # pyright: ignore[reportUnusedImport, reportMissingImports]
+        import fontTools  # noqa: F401  # pyright: ignore[reportUnusedImport, reportMissingTypeStubs]
         return True
     except ModuleNotFoundError:
         return False
@@ -50,7 +51,7 @@ def version_callback(value: bool) -> None:
 
 @app.callback()
 def callback(
-    version: Annotated[  # noqa: F811
+    version: Annotated[  # noqa: F811  # pyright: ignore[reportUnusedParameter]
         Optional[bool], 
         Option("--version", "-v", callback=version_callback, is_eager=True, help="Show the version and exit")
     ] = None
@@ -58,8 +59,8 @@ def callback(
     """Hello Fontra"""
 
 
-@app.command(help="List available fonts.")
-def list(
+@app.command("list", help="List available fonts.")
+def list_(
     tree: Annotated[
         Optional[bool],
         Option("--tree/--table", "-t/-T", help="Whether to display a tree or a table.")
@@ -91,7 +92,7 @@ def list(
                 _label = f"[blue]{font}[/]"
             _tree = fonts_tree.add(_label)
             for style in get_font_styles(font):
-                _tree.add(style)
+                _ = _tree.add(style)
     else:
         fonts_table = Table("Name", "Style", box=box.DOUBLE_EDGE, show_lines=True)
         for font in fonts:
@@ -115,7 +116,7 @@ def fontdirs() -> None:
 
 @app.command(help="Show the font information.")
 def show(
-    name: Annotated[List[FontFamilyName], Argument(help="Font family name.")], 
+    name: Annotated[list[FontFamilyName], Argument(help="Font family name.")], 
     localized: Annotated[bool, Option("--localized/--unlocalized", "-l/-L", help="Whether to show localized font name.")] = True,
     fuzzy: Annotated[bool, Option("--fuzzy/--exact", "-f/-F", help="Whether to fuzzy match.")] = False
 ) -> None:
@@ -140,8 +141,11 @@ def unpack(
     output: Annotated[Optional[Path], Option(help="Path to the output directory.")] = None,
 ) -> None:
     try:
-        from fontTools.ttLib.ttCollection import (  # noqa: F401  # pyright: ignore[reportMissingImports]
+        from fontTools.ttLib.ttCollection import (  # noqa: F401  # pyright: ignore[reportMissingTypeStubs]
             TTCollection,
+        )
+        from fontTools.ttLib.ttFont import (  # pyright: ignore[reportMissingTypeStubs]
+            TTFont,
         )
     except ModuleNotFoundError:
         console.print(
@@ -167,13 +171,14 @@ def unpack(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     ttc = TTCollection(str(path))
+    ttc = cast(Sequence[TTFont], cast(object, ttc))
     total_fonts = len(ttc)
 
     with Progress() as progress:
         task = progress.add_task("Extracting fonts...", total=total_fonts)
         for i, font in enumerate(iterable=ttc):
             output_filename = output_dir / f"{path.stem}#{i}.ttf"
-            font.save(str(output_filename))
+            font.save(str(output_filename))  # pyright: ignore[reportUnknownMemberType]
             progress.update(task, advance=1)
         
         progress.update(task, completed=total_fonts)
@@ -183,7 +188,7 @@ def unpack(
 @app.command(help="Report an issue", rich_help_panel="Others")
 def report() -> None:
     console.print("🌈 [bold magenta]Redirecting to Github Issue...[/bold magenta] 🌈")
-    typer.launch("https://github.com/NCBM/fontra/issues", wait=True)
+    _ = typer.launch("https://github.com/NCBM/fontra/issues", wait=True)
 
 
 if __name__ == "__main__":

@@ -3,7 +3,6 @@ import sys
 import traceback
 import warnings
 from pathlib import Path
-from typing import cast
 
 import freetype
 import freetype.ft_errors
@@ -78,10 +77,9 @@ def update_custom_fontfiles_index() -> None:
 
 
 def _update_fontref_index(fn: Path, face: freetype.Face) -> None:
-    family = cast(bytes, face.family_name).decode()
-    style = cast(bytes, face.style_name).decode()
-    indexed_fontrefs.setdefault(family, {})
-    indexed_fontrefs[family][style] = FontRef(fn, face.face_index)
+    family = face.family_name.decode()
+    style = face.style_name.decode()
+    indexed_fontrefs.setdefault(family, {})[style] = FontRef(fn, face.face_index)
     if face.is_sfnt:
         _ffname = get_localized_family_name(face)
         indexed_langnames.update({fn: family for fn, *_ in _ffname if fn != family})
@@ -102,8 +100,7 @@ def update_fontrefs_index():
             face = _ft_open_face(fn)
         except freetype.ft_errors.FT_Exception:
             warnings.warn(
-                f"Some error occurred when loading font {str(fn)!r}, "
-                "skipped.\n"
+                f"Some error occurred when loading font {str(fn)!r}, skipped.\n"
             )
             traceback.print_exc()
             continue
