@@ -33,7 +33,7 @@ def init_fontdb(*custom_dirs: Path, accept_envvars: bool = True):
         FONTDIRS_CUSTOM.extend(custom_dirs)
     if accept_envvars:
         FONTDIRS_CUSTOM.extend(
-            Path(x) for x in
+            Path(x).expanduser().resolve() for x in
             os.environ.get("PYFONTRA_CUSTOM_FONTDIRS", "").split(os.pathsep) if x
         )
     update_custom_fontfiles_index()
