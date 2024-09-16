@@ -42,6 +42,10 @@ def update_system_fontdirs() -> None:
             Path(datadir) / "fonts"
             for datadir in xdgdata.split(":") if datadir
         )
+        if android_root := os.getenv("ANDROID_ROOT"):
+            # try include Android system font directory
+            if (android_fonts := Path(android_root) / "fonts").is_dir():
+                FONTDIRS_SYSTEM.append(android_fonts)
     elif sys.platform == "darwin":
         FONTDIRS_SYSTEM.extend(
             (
