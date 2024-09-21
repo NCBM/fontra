@@ -101,6 +101,15 @@ def get_font_styles(name: FontFamilyName, localized: bool = True, fuzzy: bool = 
 
 
 def has_font_family(name: FontFamilyName, localized: bool = True, classical: bool = False) -> bool:
+    """Check whether the specified font family name exists.
+    
+    Params:
+    - name: font family name.
+    - localized: whether to lookup localized index.
+    - classical: whether to lookup classical index (where family names contain styles).
+
+    Return: whether the specified font family name exists.
+    """
     if classical:
         return name in _indexed_classical_fontrefs
     name = get_unlocalized_name(name) if localized else name
@@ -108,6 +117,16 @@ def has_font_family(name: FontFamilyName, localized: bool = True, classical: boo
 
 
 def has_font_style(name: FontFamilyName, style: str, localized: bool = True, classical: bool = False) -> bool:
+    """Check whether the specified font style exists.
+    
+    Params:
+    - name: font family name.
+    - style: font style.
+    - localized: whether to lookup localized index.
+    - classical: whether to lookup classical index (where family names contain styles).
+
+    Return: whether the specified font style exists.
+    """
     if classical:
         return name in _indexed_classical_fontrefs
     name = get_unlocalized_name(name) if localized else name
