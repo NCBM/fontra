@@ -1,6 +1,6 @@
 [project]
 name = "fontra"
-version = "0.4.0"
+version = "0.5.0"
 description = "Font indexing and querying support like fontconfig."
 authors = [
     {name = "HivertMoZara", email = "worldmozara@163.com"},
