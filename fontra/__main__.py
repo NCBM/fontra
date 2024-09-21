@@ -14,6 +14,7 @@ from typer import Argument, Option
 
 from fontra import (
     all_fonts,
+    get_font,
     get_font_styles,
     get_fontdirs,
     get_localized_names,
@@ -118,14 +119,19 @@ def fontdirs() -> None:
 def show(
     name: Annotated[list[FontFamilyName], Argument(help="Font family name.")], 
     localized: Annotated[bool, Option("--localized/--unlocalized", "-l/-L", help="Whether to show localized font name.")] = True,
-    fuzzy: Annotated[bool, Option("--fuzzy/--exact", "-f/-F", help="Whether to fuzzy match.")] = False
+    fuzzy: Annotated[bool, Option("--fuzzy/--exact", "-f/-F", help="Whether to fuzzy match.")] = False,
+    verbose: Annotated[bool, Option("--verbose", "-v", help="Whether to show font location.")] = False
 ) -> None:
     try:
         font_name = " ".join(name)
         styles = get_font_styles(font_name, localized, fuzzy)
         console.print(f"The font family '{font_name}' contains {len(styles)} styles:")
         for style in styles:
-            console.print(f"- {style}")
+            if verbose:
+                fontref = get_font(font_name, style, localized, fuzzy)
+                console.print(f"- {style} ({fontref.path}:{fontref.bank})")
+            else:
+                console.print(f"- {style}")
     except KeyError as e:
         console.print(f"Error: {e}", style="bold red")
 

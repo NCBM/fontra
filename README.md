@@ -52,6 +52,8 @@ fontra --help
                                             Whether to lookup the localized index.
             --fuzzy/[--exact] | -f/[-F]
                                             Whether to fuzzy match.
+            --verbose/-v
+                                            Whether to show font path
        unlocalize NAME
                                             Convert a name into an unlocalized name.
        unpack PATH
