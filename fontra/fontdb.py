@@ -104,6 +104,7 @@ def _ft_open_face(fn: Path, index: int = 0) -> freetype.Face:
 def update_fontrefs_index() -> None:
     """Update font references index."""
     indexed_fontrefs.clear()
+    indexed_classical_fontrefs.clear()
     indexed_langnames.clear()
     for fn in (*_indexed_fontfiles_system, *_indexed_fontfiles_custom):
         try:
