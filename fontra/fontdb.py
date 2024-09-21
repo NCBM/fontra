@@ -2,13 +2,14 @@ import os
 import sys
 import traceback
 import warnings
+from itertools import chain
 from pathlib import Path
 
 import freetype
 import freetype.ft_errors
 
 from .consts import SUPPORTED_EXT
-from .locutil import get_localized_family_name
+from .locutil import get_font_names, get_localized_family_name, get_preferred_names
 from .typing import FontFamilyName, FontRef, StyleName
 
 FONTDIRS_SYSTEM: list[Path] = []
@@ -17,6 +18,7 @@ _indexed_fontfiles_system: set[Path] = set()
 _indexed_fontfiles_custom: set[Path] = set()
 
 indexed_fontrefs: dict[FontFamilyName, dict[StyleName, FontRef]] = {}
+indexed_classical_fontrefs: dict[FontFamilyName, dict[StyleName, FontRef]] = {}
 indexed_langnames: dict[FontFamilyName, FontFamilyName] = {}
 
 
@@ -87,6 +89,8 @@ def _update_fontref_index(fn: Path, face: freetype.Face) -> None:
     style = face.style_name.decode()
     indexed_fontrefs.setdefault(family, {})[style] = FontRef(fn, face.face_index)
     if face.is_sfnt:
+        for name, style_ in chain(get_font_names(face), get_preferred_names(face)):
+            indexed_classical_fontrefs.setdefault(name, {})[style_] = indexed_fontrefs[family][style]
         _ffname = get_localized_family_name(face)
         indexed_langnames.update({fn: family for fn, *_ in _ffname if fn != family})
 
@@ -97,7 +101,7 @@ def _ft_open_face(fn: Path, index: int = 0) -> freetype.Face:
     return freetype.Face(str(fn), index)
 
 
-def update_fontrefs_index():
+def update_fontrefs_index() -> None:
     """Update font references index."""
     indexed_fontrefs.clear()
     indexed_langnames.clear()
@@ -116,13 +120,15 @@ def update_fontrefs_index():
             _update_fontref_index(fn, face)
 
 
-def all_fonts() -> list[FontFamilyName]:
+def all_fonts(*, classical: bool = False) -> list[FontFamilyName]:
     """Get available fonts, without localized name.
 
     Return: a list includes font family names.
     
     The name list is not guaranteed to be sorted.
     """
+    if classical:
+        return list(indexed_classical_fontrefs)
     return list(indexed_fontrefs)
 
 
