@@ -1,5 +1,5 @@
 """
-some small work with fonts.
+Font indexing and querying support like fontconfig.
 """
 
 import os
