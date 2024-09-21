@@ -11,6 +11,7 @@ from .fontdb import all_fonts as all_fonts
 from .fontdb import get_fontdirs as get_fontdirs
 from .fontdb import get_localized_names as get_localized_names
 from .fontdb import get_unlocalized_name as get_unlocalized_name
+from .fontdb import indexed_classical_fontrefs as _indexed_classical_fontrefs
 from .fontdb import indexed_fontrefs as _indexed_fontrefs
 from .fontdb import update_custom_fontfiles_index as update_custom_fontfiles_index
 from .fontdb import update_fontrefs_index as update_fontrefs_index
@@ -40,7 +41,7 @@ def init_fontdb(*custom_dirs: Path, accept_envvars: bool = True):
     update_fontrefs_index()
 
 
-def get_font(name: FontFamilyName, style: str, localized: bool = True, fuzzy: bool = False) -> FontRef:
+def get_font(name: FontFamilyName, style: str, localized: bool = True, fuzzy: bool = False, classical: bool = False) -> FontRef:
     """Get info for loading correct font faces.
     
     Params:
@@ -48,12 +49,14 @@ def get_font(name: FontFamilyName, style: str, localized: bool = True, fuzzy: bo
     - style: font style.
     - localized: whether to lookup localized index.
     - fuzzy: whether to fuzzy match.
+    - classical: whether to lookup classical index (where family names contain styles).
 
     Return: a named tuple includes file path and collection index.
     """
-    name = get_unlocalized_name(name) if localized else name
-    if name not in _indexed_fontrefs:
-        match = match_font_name(name)
+    index = _indexed_classical_fontrefs if classical else _indexed_fontrefs
+    name = get_unlocalized_name(name) if localized and not classical else name
+    if name not in index:
+        match = match_font_name(name, classical=classical)
         if fuzzy and match:
             name = match
         else:
@@ -61,8 +64,8 @@ def get_font(name: FontFamilyName, style: str, localized: bool = True, fuzzy: bo
                 f"Font {name!r} not found."
                 + (f" Did you mean {match!r} ?" if match else "")
             )
-    if style not in (_fonts := _indexed_fontrefs[name]):
-        match = match_font_style(name, style)
+    if style not in (_fonts := index[name]):
+        match = match_font_style(name, style, classical=classical)
         if fuzzy and match:
             style = match
         else:
@@ -73,34 +76,40 @@ def get_font(name: FontFamilyName, style: str, localized: bool = True, fuzzy: bo
     return _fonts[style]
 
 
-def get_font_styles(name: FontFamilyName, localized: bool = True, fuzzy: bool = False) -> list[StyleName]:
+def get_font_styles(name: FontFamilyName, localized: bool = True, fuzzy: bool = False, classical: bool = False) -> list[StyleName]:
     """Get available font styles.
     
     Params:
     - name: font family name.
     - localized: whether to lookup localized index.
     - fuzzy: whether to fuzzy match.
+    - classical: whether to lookup classical index (where family names contain styles).
 
     Return: a list includes style names.
     """
-    name = get_unlocalized_name(name) if localized else name
-    if name not in _indexed_fontrefs:
-        match = match_font_name(name)
+    index = _indexed_classical_fontrefs if classical else _indexed_fontrefs
+    name = get_unlocalized_name(name) if localized and not classical else name
+    if name not in index:
+        match = match_font_name(name, classical=classical)
         if fuzzy and match:
-            return [st for st in _indexed_fontrefs[match]]
+            return [st for st in index[match]]
         raise KeyError(
             f"Font {name!r} not found."
             + (f" Did you mean {match!r} ?" if match else "")
         )
-    return [st for st in _indexed_fontrefs[name]]
+    return [st for st in index[name]]
 
 
-def has_font_family(name: FontFamilyName, localized: bool = True) -> bool:
+def has_font_family(name: FontFamilyName, localized: bool = True, classical: bool = False) -> bool:
+    if classical:
+        return name in _indexed_classical_fontrefs
     name = get_unlocalized_name(name) if localized else name
     return name in _indexed_fontrefs
 
 
-def has_font_style(name: FontFamilyName, style: str, localized: bool = True) -> bool:
+def has_font_style(name: FontFamilyName, style: str, localized: bool = True, classical: bool = False) -> bool:
+    if classical:
+        return name in _indexed_classical_fontrefs
     name = get_unlocalized_name(name) if localized else name
     return name in _indexed_fontrefs and style in _indexed_fontrefs[name]
 
